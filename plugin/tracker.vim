@@ -1,24 +1,31 @@
 let s:save_cpo = &cpo
 set cpo&vim
 
-if exists("g:loaded_tracker")
+if exists("g:tracker_loaded")
   finish
 endif
-let g:loaded_tracker = 1
+let g:tracker_loaded = 1
+
+set ut=500
 
 function! s:dump_vim_interactions()
-  echomsg "Dumping interactions to /tmp/vim_register.txt"
-  let l:file_contents = readfile("/tmp/vim_register.txt", "")
-  let l:file_contents += s:events
-  if !empty(l:file_contents) && empty(l:file_contents[-1])
-    call remove(l:file_contents, -1)
-  endif
-  call writefile(l:file_contents, "/tmp/vim_register.txt", "")
+  call s:publish_msg("/editor/vim (" . join(s:events, " ") . ")")
+  call s:publish_msg("/cwd/vim" . expand("%:p:h"))
   let s:events = []
 endfunction
 
+function! s:get_rfc3339()
+  if exists("*strftime")
+    return "#inst \"" . strftime("%FT%T%z", localtime()) . "\""
+  else
+    return "nil"
+  endif
+endfunction
+
 function! s:collect_vim_interactions(cmd)
-  let l:entry = printf("(:command :\"%s\" :file-name :\"%s\" :buffer-name \"%s\" :match \"%s\)", a:cmd, expand("<afile>"), expand("<abuffer>"), expand("<amatch>"))
+  let l:entry = printf(
+    \ "{ :editor :vim :event {:command %s} :file-name \"%s\" :buffer-name \"%s\" :column %d, :line %d :time %s}", 
+    \ a:cmd, expand("%:p"), expand(bufname("%")), col("."), line("."), s:get_rfc3339())
   call add(s:events, l:entry)
 endfunction
 
@@ -62,7 +69,7 @@ function! s:bind_collector_to_events()
     au FileChangedRO * call <SID>collect_vim_interactions("FileChangedRO")
     au ShellCmdPost * call <SID>collect_vim_interactions("ShellCmdPost")
     au ShellFilterPost * call <SID>collect_vim_interactions("ShellFilterPost")
-    au FuncUndefined * call <SID>collect_vim_interactions("FuncUndefined")
+    " au FuncUndefined * call <SID>collect_vim_interactions("FuncUndefined")
     au SpellFileMissing * call <SID>collect_vim_interactions("SpellFileMissing")
     au VimResized * call <SID>collect_vim_interactions("VimResized")
     au FocusGained * call <SID>collect_vim_interactions("FocusGained")
@@ -86,6 +93,29 @@ function! s:bind_collector_to_events()
     au QuickFixCmdPost * call <SID>collect_vim_interactions("QuickFixCmdPost")
     au SessionLoadPost * call <SID>collect_vim_interactions("SessionLoadPost")
   augroup END
+endfunction
+
+function! s:publish_msg(msg)
+  " echo "publishing msg: " . a:msg
+  python <<EOF
+import socket
+import os.path
+import vim
+
+SOCKET_FILE = os.path.expanduser("~/.pulse/.unix-datagram.socket")
+
+def _publish_msg(msg):
+  if os.path.exists(SOCKET_FILE):
+    sock = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+    sock.connect(SOCKET_FILE)
+    sock.sendall(msg)
+    sock.close()
+
+try:
+  _publish_msg(vim.eval("a:msg"))
+except Exception, e: 
+  print e
+EOF
 endfunction
 
 call s:bind_collector_to_events()
