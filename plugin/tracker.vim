@@ -8,7 +8,7 @@ if exists("g:tracker_loaded")
 endif
 let g:tracker_loaded = 1
 
-set ut=500
+set updatetime=500
 
 function! s:dump_vim_interactions()
   call s:publish_msg("/tracker/vim (" . join(s:events, " ") . ")")
@@ -34,6 +34,7 @@ endfunction
 function! s:bind_collector_to_events()
   let s:events = []
   augroup tracker_events_aug
+    autocmd!
     au BufNewFile * call <SID>collect_vim_interactions("BufNewFile")
     au BufRead * call <SID>collect_vim_interactions("BufRead")
     au BufReadPost * call <SID>collect_vim_interactions("BufReadPost")
@@ -79,6 +80,7 @@ function! s:bind_collector_to_events()
     au CursorHold * call <SID>collect_vim_interactions("CursorHold")
     au CursorHold * call <SID>dump_vim_interactions()
     au CursorHoldI * call <SID>collect_vim_interactions("CursorHoldI")
+    au CursorHoldI * call <SID>dump_vim_interactions()
     au CursorMoved * call <SID>collect_vim_interactions("CursorMoved")
     au CursorMovedI * call <SID>collect_vim_interactions("CursorMovedI")
     au WinEnter * call <SID>collect_vim_interactions("WinEnter")
