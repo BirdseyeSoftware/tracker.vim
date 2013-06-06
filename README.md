@@ -10,5 +10,4 @@ Install via [pathogen][https://github.com/tpope/vim-pathogen].
 ## Note
 
 If you have been directed to this page, is because you know
-about the pulse project, otherwise, there will be more info 
-about soonish.
+about the pulse project. There will be more info about it later.
