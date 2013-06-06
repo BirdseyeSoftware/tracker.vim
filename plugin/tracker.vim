@@ -1,6 +1,8 @@
 let s:save_cpo = &cpo
 set cpo&vim
 
+let s:pulse_username = ""
+
 if exists("g:tracker_loaded")
   finish
 endif
@@ -9,8 +11,8 @@ let g:tracker_loaded = 1
 set ut=500
 
 function! s:dump_vim_interactions()
-  call s:publish_msg("/editor/vim (" . join(s:events, " ") . ")")
-  call s:publish_msg("/cwd/vim" . expand("%:p:h"))
+  call s:publish_msg("/tracker/vim (" . join(s:events, " ") . ")")
+  call s:publish_msg("/cwd/vim \"" . expand("%:p:h") . "\"")
   let s:events = []
 endfunction
 
@@ -24,8 +26,8 @@ endfunction
 
 function! s:collect_vim_interactions(cmd)
   let l:entry = printf(
-    \ "{ :editor :vim :event {:command %s} :file-name \"%s\" :buffer-name \"%s\" :column %d, :line %d :time %s}", 
-    \ a:cmd, expand("%:p"), expand(bufname("%")), col("."), line("."), s:get_rfc3339())
+    \ "{ :editor :vim :event {:command %s} :file-name \"%s\" :buffer-name \"%s\" :column %d, :line %d :time %s :hostname \"%s\" :username \"%s\"}",
+    \ a:cmd, expand("%:p"), expand(bufname("%")), col("."), line("."), s:get_rfc3339(), hostname(), $USER)
   call add(s:events, l:entry)
 endfunction
 
@@ -113,7 +115,7 @@ def _publish_msg(msg):
 
 try:
   _publish_msg(vim.eval("a:msg"))
-except Exception, e: 
+except Exception, e:
   print e
 EOF
 endfunction
