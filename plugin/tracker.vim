@@ -1,3 +1,4 @@
+finish
 let s:save_cpo = &cpo
 set cpo&vim
 
@@ -8,7 +9,9 @@ if exists("g:tracker_loaded")
 endif
 let g:tracker_loaded = 1
 
-set updatetime=500
+if get(g:, 'tracker_disable_set_updatetime', 0)
+  set updatetime=500
+endif
 
 function! s:dump_vim_interactions()
   call s:publish_msg("/tracker/vim (" . join(s:events, " ") . ")")
