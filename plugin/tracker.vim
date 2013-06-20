@@ -2,6 +2,11 @@ finish
 let s:save_cpo = &cpo
 set cpo&vim
 
+if !has('python')
+  echoerr 'Disabling tracker.vim. You need +python in your Vim'
+  finish
+endif
+
 let s:pulse_username = ""
 
 if exists("g:tracker_loaded")
