@@ -27,7 +27,7 @@ endfunction
 function! s:collect_vim_interactions(cmd)
   let l:entry = printf(
     \ "{ :editor :vim :event {:command %s} :file-name \"%s\" :buffer-name \"%s\" :column %d, :line %d :time %s :hostname \"%s\" :username \"%s\"}",
-    \ a:cmd, expand("%:p"), expand(bufname("%")), col("."), line("."), s:get_rfc3339(), hostname(), $USER)
+    \ a:cmd, escape(expand("%:p"), '\\"'), escape(expand(bufname("%")), '\\"'), col("."), line("."), s:get_rfc3339(), hostname(), $USER)
   call add(s:events, l:entry)
 endfunction
 
